@@ -1,5 +1,43 @@
 <?php
 include('connection.php');
+    $login_error = false;
+    $username = "";
+    if ($_SERVER["REQUEST_METHOD"] == "POST") {
+        if (!isset($_POST["id"])) {
+            $username =  isset($_POST["username"]) ? $_POST["username"] : NULL;
+            $password = isset($_POST["pwd"]) ? $_POST["pwd"] : NULL;
+            $remember = $_POST["remember"];
+            
+            $stmt1 = $db->prepare("SELECT * FROM Users WHERE username = ?");
+            $stmt1->execute(array($username));
+            $user = $stmt->fetch();
+            if ($user != NULL && $password == $user["password"]) {
+                $_SESSION["user"] = $user;
+            } else {
+                $login_error = true;
+            }
+            if ($remember) {
+                setcookie("username", $username, time()+60*60*24*365);
+            } else {
+                setcookie("username", $username, time()-1);
+            }
+        } else {
+            $id = $_POST["id"];
+            $title = $_POST["title"];
+            $body = $_POST["body"];
+            $stmt1 = $db->prepare("INSERT INTO Posts (title, body, publishDate, userId) VALUES (?,?,?,?)");
+            $stmt->execute(array($title, $body, date("Y-m-d"), $id));
+        }
+    } else {
+        $logout = isset($_GET["logout"]) ? $_GET["logout"] : NULL;
+        $username = isset($_COOKIE["username"]) ? $_COOKIE["username"] : "";
+        if ($logout == 1) {
+            session_destroy();
+            header('Location: index.php');
+        }
+    }
+    $rows = $db->query("SELECT * FROM Posts");
+
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
